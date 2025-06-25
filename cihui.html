@@ -1,4 +1,4 @@
-<!DOCTYPE html> 
+<!DOCTYPE html>  
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
@@ -73,6 +73,84 @@
         .unit-btn:hover, .unit-btn.active {
             background: #667eea;
             color: white;
+            transform: translateY(-2px);
+        }
+
+        /* 随机测试模块样式 */
+        .random-test-selector {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+
+        .test-mode-toggle {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .mode-btn {
+            padding: 10px 20px;
+            border: 2px solid #667eea;
+            background: white;
+            color: #667eea;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+        }
+
+        .mode-btn:hover, .mode-btn.active {
+            background: #667eea;
+            color: white;
+        }
+
+        .random-settings {
+            margin-top: 15px;
+        }
+
+        .setting-group {
+            margin-bottom: 15px;
+        }
+
+        .setting-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .setting-group select, .setting-group input {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1em;
+        }
+
+        .setting-group select:focus, .setting-group input:focus {
+            border-color: #667eea;
+            outline: none;
+        }
+
+        .start-test-btn {
+            background: #28a745;
+            color: white;
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .start-test-btn:hover {
+            background: #218838;
             transform: translateY(-2px);
         }
 
@@ -284,8 +362,44 @@
             <p>2024级大一下学期 • 慕课词汇专项练习</p>
         </div>
 
+        <!-- 测试模式选择 -->
+        <div class="random-test-selector">
+            <h3>📝 选择测试模式</h3>
+            <div class="test-mode-toggle">
+                <button class="mode-btn active" id="unitModeBtn">单元练习</button>
+                <button class="mode-btn" id="randomModeBtn">随机测试</button>
+            </div>
+            
+            <!-- 随机测试设置 -->
+            <div class="random-settings hidden" id="randomSettings">
+                <div class="setting-group">
+                    <label for="testUnit">选择测试单元:</label>
+                    <select id="testUnit">
+                        <option value="all">全部单元</option>
+                        <option value="U1">Unit 1</option>
+                        <option value="U2">Unit 2</option>
+                        <option value="U3">Unit 3</option>
+                        <option value="U4">Unit 4</option>
+                        <option value="U5">Unit 5</option>
+                        <option value="U6">Unit 6</option>
+                        <option value="U7">Unit 7</option>
+                        <option value="U8">Unit 8</option>
+                        <option value="U9">Unit 9</option>
+                        <option value="U10">Unit 10</option>
+                        <option value="U11">Unit 11</option>
+                        <option value="U12">Unit 12</option>
+                    </select>
+                </div>
+                <div class="setting-group">
+                    <label for="questionCount">题目数量:</label>
+                    <input type="number" id="questionCount" min="5" max="50" value="10" placeholder="请输入题目数量">
+                </div>
+                <button class="start-test-btn" onclick="startRandomTest()">🎲 开始随机测试</button>
+            </div>
+        </div>
+
         <!-- 单元选择器 -->
-        <div class="unit-selector">
+        <div class="unit-selector" id="unitSelector">
             <h3>📚 选择练习单元</h3>
             <div class="unit-buttons">
                 <button class="unit-btn active" data-unit="U1">U1</button>
@@ -310,7 +424,7 @@
                 <div class="progress">
                     <div class="progress-bar" id="progressBar" style="width: 6.67%"></div>
                 </div>
-                <div class="score-info">当前单元: <span id="currentUnit">U1</span></div>
+                <div class="score-info">当前模式: <span id="currentMode">单元练习 - U1</span></div>
             </div>
 
             <div class="question-text" id="questionText">
@@ -344,7 +458,6 @@
     </div>
 
     <script>
-
         const questionBank = {
             U1: [
                 {
@@ -1632,25 +1745,110 @@
             ]
         };
 
-
-
         // 全局变量
         let currentUnit = 'U1';
         let currentQuestionIndex = 0;
         let userAnswers = [];
         let score = 0;
         let answered = false;
+        let isRandomMode = false;
+        let currentQuestions = [];
+        let testMode = 'unit'; // 'unit' 或 'random'
 
         // 初始化
         document.addEventListener('DOMContentLoaded', function() {
             initializeQuiz();
             setupUnitSelector();
+            setupModeToggle();
         });
+
+        function setupModeToggle() {
+            const unitModeBtn = document.getElementById('unitModeBtn');
+            const randomModeBtn = document.getElementById('randomModeBtn');
+            const unitSelector = document.getElementById('unitSelector');
+            const randomSettings = document.getElementById('randomSettings');
+
+            unitModeBtn.addEventListener('click', function() {
+                testMode = 'unit';
+                isRandomMode = false;
+                unitModeBtn.classList.add('active');
+                randomModeBtn.classList.remove('active');
+                unitSelector.classList.remove('hidden');
+                randomSettings.classList.add('hidden');
+                resetQuiz();
+                loadQuestion();
+            });
+
+            randomModeBtn.addEventListener('click', function() {
+                testMode = 'random';
+                randomModeBtn.classList.add('active');
+                unitModeBtn.classList.remove('active');
+                unitSelector.classList.add('hidden');
+                randomSettings.classList.remove('hidden');
+                document.getElementById('quizContainer').classList.add('hidden');
+            });
+        }
+
+        function startRandomTest() {
+            const selectedUnit = document.getElementById('testUnit').value;
+            const questionCount = parseInt(document.getElementById('questionCount').value);
+
+            if (!questionCount || questionCount < 1) {
+                alert('请输入有效的题目数量！');
+                return;
+            }
+
+            isRandomMode = true;
+            currentQuestions = generateRandomQuestions(selectedUnit, questionCount);
+            
+            if (currentQuestions.length === 0) {
+                alert('没有找到相关题目，请检查选择的单元是否有题目！');
+                return;
+            }
+
+            // 更新当前模式显示
+            const modeText = selectedUnit === 'all' ? '随机测试 - 全部单元' : `随机测试 - ${selectedUnit}`;
+            document.getElementById('currentMode').textContent = modeText;
+
+            resetQuiz();
+            loadQuestion();
+        }
+
+        function generateRandomQuestions(unit, count) {
+            let allQuestions = [];
+            
+            if (unit === 'all') {
+                // 从所有单元收集题目
+                Object.keys(questionBank).forEach(unitKey => {
+                    questionBank[unitKey].forEach(question => {
+                        allQuestions.push({...question, unit: unitKey});
+                    });
+                });
+            } else {
+                // 从指定单元收集题目
+                if (questionBank[unit]) {
+                    questionBank[unit].forEach(question => {
+                        allQuestions.push({...question, unit: unit});
+                    });
+                }
+            }
+
+            // 随机打乱数组
+            for (let i = allQuestions.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [allQuestions[i], allQuestions[j]] = [allQuestions[j], allQuestions[i]];
+            }
+
+            // 返回指定数量的题目
+            return allQuestions.slice(0, Math.min(count, allQuestions.length));
+        }
 
         function setupUnitSelector() {
             const unitButtons = document.querySelectorAll('.unit-btn');
             unitButtons.forEach(btn => {
                 btn.addEventListener('click', function() {
+                    if (isRandomMode) return;
+                    
                     // 移除所有active类
                     unitButtons.forEach(b => b.classList.remove('active'));
                     // 添加active类到当前按钮
@@ -1658,6 +1856,7 @@
                     
                     // 切换单元
                     currentUnit = this.dataset.unit;
+                    document.getElementById('currentMode').textContent = `单元练习 - ${currentUnit}`;
                     resetQuiz();
                     loadQuestion();
                 });
@@ -1679,16 +1878,25 @@
         }
 
         function loadQuestion() {
-            const questions = questionBank[currentUnit];
-            if (!questions || currentQuestionIndex >= questions.length) {
-                showResults();
-                return;
+            let questions, question;
+            
+            if (isRandomMode) {
+                questions = currentQuestions;
+                if (!questions || currentQuestionIndex >= questions.length) {
+                    showResults();
+                    return;
+                }
+                question = questions[currentQuestionIndex];
+            } else {
+                questions = questionBank[currentUnit];
+                if (!questions || currentQuestionIndex >= questions.length) {
+                    showResults();
+                    return;
+                }
+                question = questions[currentQuestionIndex];
             }
-
-            const question = questions[currentQuestionIndex];
             
             // 更新题目信息
-            document.getElementById('currentUnit').textContent = currentUnit;
             document.getElementById('questionNumber').textContent = `题目 ${currentQuestionIndex + 1}/${questions.length}`;
             document.getElementById('questionText').textContent = question.question;
             
@@ -1733,7 +1941,7 @@
             document.getElementById('prevBtn').disabled = currentQuestionIndex === 0;
         }
 
-           function submitAnswer() {
+        function submitAnswer() {
             if (answered) return;
             
             const selectedOption = document.querySelector('input[name="answer"]:checked');
@@ -1743,7 +1951,14 @@
             }
             
             const userAnswer = parseInt(selectedOption.value);
-            const question = questionBank[currentUnit][currentQuestionIndex];
+            let question;
+            
+            if (isRandomMode) {
+                question = currentQuestions[currentQuestionIndex];
+            } else {
+                question = questionBank[currentUnit][currentQuestionIndex];
+            }
+            
             const isCorrect = userAnswer === question.correct;
             
             userAnswers[currentQuestionIndex] = userAnswer;
@@ -1800,7 +2015,13 @@
             document.getElementById('quizContainer').classList.add('hidden');
             document.getElementById('resultContainer').classList.remove('hidden');
             
-            const totalQuestions = questionBank[currentUnit].length;
+            let totalQuestions;
+            if (isRandomMode) {
+                totalQuestions = currentQuestions.length;
+            } else {
+                totalQuestions = questionBank[currentUnit].length;
+            }
+            
             const percentage = Math.round((score / totalQuestions) * 100);
             
             document.getElementById('finalScore').textContent = `${score}/${totalQuestions}`;
@@ -1808,10 +2029,15 @@
         }
 
         function restartQuiz() {
+            if (isRandomMode) {
+                // 重新开始随机测试
+                const selectedUnit = document.getElementById('testUnit').value;
+                const questionCount = parseInt(document.getElementById('questionCount').value);
+                currentQuestions = generateRandomQuestions(selectedUnit, questionCount);
+            }
             resetQuiz();
             loadQuestion();
         }
     </script>
 </body>
 </html>
-
